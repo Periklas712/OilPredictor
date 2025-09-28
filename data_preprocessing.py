@@ -1,24 +1,20 @@
 import pandas as pd
 import numpy as np
-from sklearn.neighbors import LocalOutlierFactor
 from periods_costs import covid_periods, war_periods, high_season_periods, revaluation_periods
 from periods_costs import cost, olive_oil_price, locations
-from sklearn.ensemble import IsolationForest
-
 
 def load_data(path="data1.xlsx"):
     df = pd.read_excel(path)
     df.columns = df.columns.str.strip()  
     df["DATE"] = pd.to_datetime(df['DATE'], dayfirst=True)
-    df = df.sort_values(by="DATE", ascending=False)
+    df = df.sort_values(by="DATE")
     df['QUANTITY'] = df['QUANTITY'].astype(int).abs()
-    df['YEAR'] = df['DATE'].dt.year
-    df['MONTH'] = df['DATE'].dt.month
     print("Data loaded and converted to correct types")
     return df
 
 def map_periods(df):
     dates = df['DATE']
+    
     covid_mask = np.zeros(len(df), dtype=bool)
     for start, end in covid_periods:
         covid_mask |= (dates >= pd.to_datetime(start)) & (dates <= pd.to_datetime(end))
@@ -77,15 +73,24 @@ def abs_amounts(df):
     print("Data converted to positive values")
     return df
 
-def remove_outliers(df,column,factor=1.5): 
+def remove_outliers(df, column, factor=1.5): 
     Q1 = df[column].quantile(0.25) 
     Q3 = df[column].quantile(0.75)    
     IQR = Q3 - Q1   
     lower = Q1 - factor * IQR   
     upper = Q3 + factor * IQR  
-    print("Removed outliers with iqr method")  
+    print("Removed outliers with IQR method")  
     return df[(df[column] >= lower) & (df[column] <= upper)]
 
+def add_calendar_features(df):
+    df['DAY_OF_WEEK'] = df['DATE'].dt.dayofweek  
+    df['DAY_OF_MONTH'] = df['DATE'].dt.day
+    df['WEEK_OF_YEAR'] = df['DATE'].dt.isocalendar().week
+    df['IS_WEEKEND'] = (df['DATE'].dt.dayofweek >= 5).astype(int)
+    df['IS_WINTER'] = df['DATE'].dt.month.isin([12, 1, 2]).astype(int)
+    print("Added calendar features")
+    return df
+
 def save_clean_data(df, path="data_filled.xlsx"):
-    print("Data saved to excel")
     df.to_excel(path, index=False)
+    print("Data saved to excel")

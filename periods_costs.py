@@ -377,3 +377,12 @@ locations = {
     }
 
 columns_to_normalize = ["QUANTITY","COST","SALE_PRICE","VALUE","LAG_1","LAG_7","ROLL_7","ROLL_14"]
+
+train_end_dates = pd.to_datetime([
+    "2019-12-31",
+    "2020-12-31",
+    "2021-12-31",
+    "2022-12-31",
+    "2023-12-31",
+    "2024-12-31"
+])
